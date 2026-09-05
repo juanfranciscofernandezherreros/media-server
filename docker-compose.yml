@@ -1,0 +1,117 @@
+services:
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    container_name: jellyfin
+    environment:
+      - TZ=Europe/Madrid
+    volumes:
+      - ./docker/jellyfin:/config
+      - ./docker/jellyfin-cache:/cache
+      - ./:/data
+    ports:
+      - "8096:8096"
+    restart: unless-stopped
+    networks:
+      - media-network
+
+  jellyseerr:
+    image: fallenbagel/jellyseerr:latest
+    container_name: jellyseerr
+    environment:
+      - LOG_LEVEL=info
+      - TZ=Europe/Madrid
+      - PORT=5055
+    volumes:
+      - ./docker/jellyseerr:/app/config
+    ports:
+      - "5055:5055"
+    restart: unless-stopped
+    networks:
+      - media-network
+
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:latest
+    container_name: bazarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Madrid
+    volumes:
+      - ./docker/bazarr:/config
+      - ./:/data
+    ports:
+      - "6767:6767"
+    restart: unless-stopped
+    networks:
+      - media-network
+
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Madrid
+    ports:
+      - "8989:8989"
+    volumes:
+      - ./docker/sonarr:/config
+      - ./:/data
+    restart: unless-stopped
+    networks:
+      - media-network
+
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Madrid
+    ports:
+      - "7878:7878"
+    volumes:
+      - ./docker/radarr:/config
+      - ./:/data
+    restart: unless-stopped
+    networks:
+      - media-network
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Madrid
+    ports:
+      - "9696:9696"
+    volumes:
+      - ./docker/prowlarr:/config
+    restart: unless-stopped
+    networks:
+      - media-network
+
+  deluge:
+    image: lscr.io/linuxserver/deluge:latest
+    container_name: deluge
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Madrid
+      - DELUGE_LOGLEVEL=error
+    volumes:
+      - ./docker/deluge:/config
+      - ./:/data
+    ports:
+      - "8112:8112"
+      - "6881:6881"
+      - "6881:6881/udp"
+      - "58846:58846"
+    restart: unless-stopped
+    networks:
+      - media-network
+
+networks:
+  media-network:
+    driver: bridge

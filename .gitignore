@@ -1,0 +1,38 @@
+# Runtime configuration and application data
+docker/
+deluge/
+radarr/
+sonarr/
+prowlarr/
+bazarr/
+jellyfin/
+jellyseerr/
+
+# Media and downloads
+downloads/
+movies/
+tv/
+media/
+
+# Local secrets and environment overrides
+.env
+*.env
+!.env.example
+
+# Databases, logs and temporary files
+*.db
+*.db-shm
+*.db-wal
+*.log
+*.pid
+*.tmp
+*.bak
+
+# Operating systems and editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Local documentation unrelated to this project
+guia-plugins-codex.html
