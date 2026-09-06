@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: Media Server
+    folder: Media Server
+    type: file
+    disableDeletion: true
+    updateIntervalSeconds: 30
+    options:
+      path: /var/lib/grafana/dashboards
+

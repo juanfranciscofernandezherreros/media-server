@@ -182,3 +182,37 @@ docker compose config
 - Mantén Docker Desktop y las imágenes actualizados.
 - Utiliza únicamente fuentes y contenidos cuya descarga esté permitida en tu jurisdicción.
 
+
+## Observabilidad en Windows
+
+El archivo `docker-compose.observability.yml` despliega un stack separado con Grafana, Prometheus, Loki, Grafana Alloy y cAdvisor. Windows Exporter se ejecuta como servicio del sistema anfitrión y Prometheus accede a él mediante `host.docker.internal:9182`.
+
+Instala Windows Exporter 0.31.7 desde una consola con permisos de administrador:
+
+```powershell
+curl.exe -L https://github.com/prometheus-community/windows_exporter/releases/download/v0.31.7/windows_exporter-0.31.7-amd64.msi -o windows_exporter.msi
+msiexec.exe /i windows_exporter.msi /qn /norestart
+```
+
+Arranca el stack de observabilidad:
+
+```bash
+docker compose -f docker-compose.observability.yml up -d
+```
+
+| Servicio | Dirección |
+| --- | --- |
+| Grafana | `http://localhost:3000` |
+| Prometheus | `http://localhost:9090` |
+| Loki | `http://localhost:3100` |
+| Alloy | `http://localhost:12345` |
+| cAdvisor | `http://localhost:8080` |
+| Windows Exporter | `http://localhost:9182/metrics` |
+
+Grafana se inicia con el usuario `admin` y la contraseña `admin`, y solicita cambiarla en el primer acceso. El dashboard **Media Server - Windows y Docker** queda aprovisionado automáticamente con métricas del host, consumo por contenedor y logs centralizados.
+
+Para detener solamente la observabilidad sin afectar al servidor multimedia:
+
+```bash
+docker compose -f docker-compose.observability.yml down
+```
