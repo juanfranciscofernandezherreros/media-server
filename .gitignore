@@ -33,6 +33,3 @@ media/
 Thumbs.db
 .idea/
 .vscode/
-
-# Local documentation unrelated to this project
-guia-plugins-codex.html

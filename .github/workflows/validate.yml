@@ -1,0 +1,30 @@
+name: Validate configuration
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    env:
+      GRAFANA_ADMIN_PASSWORD: ci-validation-only
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate media Compose
+        run: docker compose -f docker-compose.yml config --quiet
+
+      - name: Validate observability Compose
+        run: docker compose -f docker-compose.observability.yml config --quiet
+
+      - name: Validate Grafana dashboard JSON
+        run: jq empty observability/grafana/dashboards/media-server.json
+
+      - name: Check tracked files for conflict markers
+        run: git grep -nE '^(<<<<<<<|=======|>>>>>>>)' -- . ':!*.lock' && exit 1 || exit 0

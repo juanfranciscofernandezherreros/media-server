@@ -83,7 +83,7 @@
         <h2>Observabilidad en tiempo real</h2>
         <p class="intro">Un segundo Compose aislado, <code>media-observability</code>, reúne métricas y logs. Sus paneles solo escuchan en <code>127.0.0.1</code>.</p>
         <div class="service-grid">
-          <article class="service"><div class="service-top"><h3>Grafana</h3><a class="port" href="http://localhost:3000">:3000</a></div><p class="role">Dashboard unificado de Windows, Docker y logs.</p><ul class="facts"><li><b>Dashboard</b><span>Media Server - Windows y Docker</span></li><li><b>Acceso inicial</b><span><code>admin / admin</code></span></li><li><b>Actualización</b><span>Cada 10 segundos</span></li></ul></article>
+          <article class="service"><div class="service-top"><h3>Grafana</h3><a class="port" href="http://localhost:3000">:3000</a></div><p class="role">Dashboard unificado de Windows, Docker y logs.</p><ul class="facts"><li><b>Dashboard</b><span>Media Server - Windows y Docker</span></li><li><b>Usuario</b><span><code>admin</code></span></li><li><b>Contraseña</b><span>Variable local <code>GRAFANA_ADMIN_PASSWORD</code></span></li><li><b>Actualización</b><span>Cada 10 segundos</span></li></ul></article>
           <article class="service"><div class="service-top"><h3>Prometheus</h3><a class="port" href="http://localhost:9090">:9090</a></div><p class="role">Guarda métricas durante 30 días.</p><ul class="facts"><li><b>Objetivos</b><span>Prometheus, cAdvisor y Windows Exporter</span></li><li><b>Estado</b><span class="status"><i class="dot"></i> 3 objetivos activos</span></li></ul></article>
           <article class="service"><div class="service-top"><h3>Loki + Alloy</h3><a class="port" href="http://localhost:3100">:3100</a></div><p class="role">Alloy descubre los contenedores y envía sus logs a Loki.</p><ul class="facts"><li><b>Retención</b><span>30 días</span></li><li><b>Jellyseerr</b><span><code>{container="jellyseerr"}</code></span></li><li><b>Alloy UI</b><span><a href="http://localhost:12345">localhost:12345</a></span></li></ul></article>
           <article class="service"><div class="service-top"><h3>cAdvisor + Windows Exporter</h3><a class="port" href="http://localhost:8080">:8080</a></div><p class="role">Miden contenedores y el anfitrión Windows.</p><ul class="facts"><li><b>Contenedores</b><span>CPU, RAM, disco y red</span></li><li><b>Windows</b><span>Puerto <code>9182</code>, servicio automático</span></li></ul></article>
@@ -136,7 +136,7 @@
           <tr><td>Jellyfin</td><td class="good">Activo y saludable</td><td>Bibliotecas “Películas” y “Series” sincronizadas con Jellyseerr.</td></tr>
           <tr><td>Jellyseerr</td><td class="good">Activo</td><td>Ha enviado correctamente al menos una petición a Radarr.</td></tr>
           <tr><td>Radarr</td><td class="good">Activo</td><td>5 entradas configuradas y 2 carpetas de películas presentes.</td></tr>
-          <tr><td>Sonarr</td><td class="warn">Activo, sin series</td><td>La raíz <code>/data/tv</code> existe, pero no hay series añadidas.</td></tr>
+          <tr><td>Sonarr</td><td class="good">Activo y descargando</td><td>La temporada 1 de <em>Game of Thrones</em> fue localizada y enviada correctamente a Deluge.</td></tr>
           <tr><td>Prowlarr</td><td class="good">Activo</td><td>3 indexadores y sincronización completa con Radarr/Sonarr.</td></tr>
           <tr><td>Deluge</td><td class="good">Activo</td><td>Rutas de incompletos/completos y etiquetas de Radarr/Sonarr configuradas.</td></tr>
           <tr><td>Bazarr</td><td class="good">Activo</td><td>Uso de Radarr y Sonarr habilitado.</td></tr>
@@ -155,7 +155,7 @@
       <section id="pendiente">
         <h2>Observaciones importantes</h2>
         <ul class="warning-list">
-          <li><strong class="warn">Sonarr está vacío.</strong> La integración está preparada, pero todavía no hay series añadidas ni carpetas en la biblioteca final.</li>
+          <li><strong class="good">Flujo de Sonarr verificado.</strong> Jellyseerr envió la solicitud, Sonarr evaluó 100 publicaciones, eligió una temporada completa en Bluray-1080p y Deluge inició la descarga.</li>
           <li><strong class="warn">Radarr contiene una entrada de título anómalo.</strong> Además de títulos normales, aparece un registro con texto de atención telefónica. Conviene revisarlo desde Radarr y eliminarlo si no fue solicitado.</li>
           <li><strong class="good">No se han incluido secretos.</strong> El documento omite claves API, tokens, contraseñas, identificadores privados y datos de autenticación.</li>
         </ul>

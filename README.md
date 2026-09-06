@@ -165,6 +165,19 @@ Para acceder desde Internet no se recomienda exponer directamente el puerto 8096
 6. Bazarr busca subtítulos cuando corresponda.
 7. Jellyfin detecta el archivo y lo incorpora a la biblioteca.
 
+### Flujo de Sonarr verificado
+
+El flujo de series se comprobó de extremo a extremo con una solicitud de *Game of Thrones* desde Jellyseerr:
+
+1. Jellyseerr aprobó la petición y Sonarr la aceptó.
+2. Sonarr añadió la serie en `/data/tv/Game of Thrones` y monitorizó la temporada 1.
+3. Buscó los 10 episodios en los dos indexadores activos.
+4. Evaluó 100 publicaciones y descartó las que tenían una calidad no permitida o no alcanzaban el mínimo de semillas.
+5. Seleccionó una temporada completa en Bluray-1080p y la envió a Deluge.
+6. Sonarr comenzó a seguir la descarga desde `/data/downloads/incomplete` para importarla posteriormente en `/data/tv/Game of Thrones`.
+
+La sincronización RSS solo detecta publicaciones nuevas. Para buscar episodios antiguos que ya están monitorizados, utiliza **Search Monitored** o la lupa de la temporada en Sonarr.
+
 ## Comandos útiles
 
 ```bash
@@ -209,7 +222,14 @@ curl.exe -L https://github.com/prometheus-community/windows_exporter/releases/do
 msiexec.exe /i windows_exporter.msi /qn /norestart
 ```
 
-Arranca el stack de observabilidad:
+Crea primero la configuración local de credenciales (el archivo `.env` está excluido de Git):
+
+`powershell
+Copy-Item .env.example .env
+notepad .env
+` 
+
+Sustituye `change-this-password` por una contraseña segura y arranca el stack de observabilidad:
 
 ```bash
 docker compose -f docker-compose.observability.yml up -d
@@ -224,7 +244,7 @@ docker compose -f docker-compose.observability.yml up -d
 | cAdvisor | `http://localhost:8080` |
 | Windows Exporter | `http://localhost:9182/metrics` |
 
-Grafana se inicia con el usuario `admin` y la contraseña `admin`, y solicita cambiarla en el primer acceso. El dashboard **Media Server - Windows y Docker** queda aprovisionado automáticamente con métricas del host, consumo por contenedor y logs centralizados.
+Grafana se inicia con el usuario `admin` y la contraseña definida en `GRAFANA_ADMIN_PASSWORD` dentro de `.env`. El dashboard **Media Server - Windows y Docker** queda aprovisionado automáticamente con métricas del host, consumo por contenedor y logs centralizados.
 
 Para consultar únicamente los logs de Jellyseerr en **Explore > Loki**:
 

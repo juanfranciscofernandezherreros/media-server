@@ -2,17 +2,16 @@ services:
   jellyfin:
     image: jellyfin/jellyfin@sha256:aefb67e6a7ff1debdd154a78a7bbb780fd0c873d8639210a7f6a2016ad2b35db
     container_name: jellyfin
+    network_mode: "service:tailscale"
     environment:
       - TZ=Europe/Madrid
     volumes:
       - ./docker/jellyfin:/config
       - ./docker/jellyfin-cache:/cache
       - ./:/data
-    ports:
-      - "8096:8096"
     restart: unless-stopped
-    networks:
-      - media-network
+    depends_on:
+      - tailscale
 
   jellyseerr:
     image: fallenbagel/jellyseerr@sha256:4538137bc5af902dece165f2bf73776d9cf4eafb6dd714670724af8f3eb77764
@@ -147,6 +146,37 @@ services:
     restart: unless-stopped
     networks:
       - media-network
+
+  tailscale:
+    image: tailscale/tailscale:latest
+    container_name: tailscale
+    hostname: media-server-share
+    environment:
+      - TS_STATE_DIR=/var/lib/tailscale
+    volumes:
+      - ./docker/tailscale:/var/lib/tailscale
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    ports:
+      - "8096:8096"
+    restart: unless-stopped
+    networks:
+      - media-network
+
+  samba:
+    image: dperson/samba
+    container_name: samba
+    network_mode: "service:tailscale"
+    environment:
+      - TZ=Europe/Madrid
+    volumes:
+      - ./:/data:ro
+    command: -s "Descargas;/data;yes;yes;yes"
+    restart: unless-stopped
+    depends_on:
+      - tailscale
 
 networks:
   media-network:
