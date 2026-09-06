@@ -10,6 +10,10 @@ Jellyseerr
     └── Sonarr ──┼── Prowlarr
                  └── Deluge ──> downloads ──> movies / tv ──> Jellyfin
                                       └──────────> Bazarr
+
+Contenedores ──> cAdvisor ──> Prometheus ──> Grafana
+       └───────> Alloy ─────> Loki ─────────> Grafana
+Windows ───────> Windows Exporter ──────────> Prometheus
 ```
 
 | Servicio | Función | Puerto |
@@ -38,7 +42,9 @@ Al iniciar el proyecto, las aplicaciones crean sus configuraciones dentro de `do
 ```text
 media-server/
 ├── docker-compose.yml
+├── docker-compose.observability.yml
 ├── docker/       # Configuración persistente de los contenedores
+├── observability/# Prometheus, Loki, Alloy y aprovisionamiento de Grafana
 ├── downloads/    # Descargas de Deluge
 ├── movies/       # Biblioteca de películas
 ├── tv/           # Biblioteca de series
@@ -69,7 +75,9 @@ Para detenerlos sin eliminar sus datos:
 docker compose down
 ```
 
-Para actualizar las imágenes:
+Las imágenes del stack multimedia están fijadas por digest SHA-256 y las de observabilidad por versión. Un `pull` no cambia silenciosamente los servicios multimedia: para actualizarlos hay que modificar deliberadamente sus digests.
+
+Para descargar las imágenes configuradas y recrear el stack:
 
 ```bash
 docker compose pull
@@ -187,6 +195,13 @@ docker compose config
 
 El archivo `docker-compose.observability.yml` despliega un stack separado con Grafana, Prometheus, Loki, Grafana Alloy y cAdvisor. Windows Exporter se ejecuta como servicio del sistema anfitrión y Prometheus accede a él mediante `host.docker.internal:9182`.
 
+- cAdvisor aporta CPU, memoria, red y actividad de los contenedores.
+- Windows Exporter aporta CPU, memoria, discos, red y servicios del anfitrión.
+- Prometheus conserva las métricas durante 30 días.
+- Alloy descubre los contenedores mediante el socket Docker y envía sus logs a Loki.
+- Loki conserva los logs durante 30 días.
+- Grafana incluye las fuentes de datos y el dashboard aprovisionados automáticamente.
+
 Instala Windows Exporter 0.31.7 desde una consola con permisos de administrador:
 
 ```powershell
@@ -210,6 +225,34 @@ docker compose -f docker-compose.observability.yml up -d
 | Windows Exporter | `http://localhost:9182/metrics` |
 
 Grafana se inicia con el usuario `admin` y la contraseña `admin`, y solicita cambiarla en el primer acceso. El dashboard **Media Server - Windows y Docker** queda aprovisionado automáticamente con métricas del host, consumo por contenedor y logs centralizados.
+
+Para consultar únicamente los logs de Jellyseerr en **Explore > Loki**:
+
+```logql
+{container="jellyseerr"}
+```
+
+Para mostrar solo advertencias y errores:
+
+```logql
+{container="jellyseerr"} |~ "(?i)warn|error|exception|fatal|failed"
+```
+
+Comprueba los dos stacks y Windows Exporter:
+
+```powershell
+docker compose ps
+docker compose -f docker-compose.observability.yml ps
+Get-Service windows_exporter
+```
+
+Reinicia toda la plataforma:
+
+```powershell
+docker compose restart
+docker compose -f docker-compose.observability.yml restart
+Restart-Service windows_exporter
+```
 
 Para detener solamente la observabilidad sin afectar al servidor multimedia:
 
