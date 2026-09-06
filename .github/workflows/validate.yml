@@ -15,7 +15,7 @@ jobs:
       GRAFANA_ADMIN_PASSWORD: ci-validation-only
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Validate media Compose
         run: docker compose -f docker-compose.yml config --quiet
