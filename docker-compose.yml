@@ -23,7 +23,7 @@ services:
     volumes:
       - ./docker/jellyseerr:/app/config
     ports:
-      - "5055:5055"
+      - "127.0.0.1:5055:5055"
     healthcheck:
       test: ["CMD", "wget", "--spider", "--quiet", "http://127.0.0.1:5055/api/v1/status"]
       interval: 30s
@@ -45,7 +45,7 @@ services:
       - ./docker/bazarr:/config
       - ./:/data
     ports:
-      - "6767:6767"
+      - "127.0.0.1:6767:6767"
     healthcheck:
       test: ["CMD", "curl", "--fail", "--silent", "--show-error", "http://127.0.0.1:6767"]
       interval: 30s
@@ -64,7 +64,7 @@ services:
       - PGID=1000
       - TZ=Europe/Madrid
     ports:
-      - "8989:8989"
+      - "127.0.0.1:8989:8989"
     volumes:
       - ./docker/sonarr:/config
       - ./:/data
@@ -86,7 +86,7 @@ services:
       - PGID=1000
       - TZ=Europe/Madrid
     ports:
-      - "7878:7878"
+      - "127.0.0.1:7878:7878"
     volumes:
       - ./docker/radarr:/config
       - ./:/data
@@ -108,7 +108,7 @@ services:
       - PGID=1000
       - TZ=Europe/Madrid
     ports:
-      - "9696:9696"
+      - "127.0.0.1:9696:9696"
     volumes:
       - ./docker/prowlarr:/config
     healthcheck:
@@ -121,9 +121,33 @@ services:
     networks:
       - media-network
 
+  gluetun:
+    image: qmcgaw/gluetun:latest
+    container_name: gluetun
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      - VPN_SERVICE_PROVIDER=nordvpn
+      - VPN_TYPE=openvpn
+      - OPENVPN_USER=${NORDVPN_USER}
+      - OPENVPN_PASSWORD=${NORDVPN_PASSWORD}
+      - OPENVPN_PROTOCOL=udp
+      - SERVER_COUNTRIES=Spain
+      - TZ=Europe/Madrid
+      - FIREWALL_INPUT_PORTS=8112,58846
+    volumes:
+      - ./docker/gluetun:/gluetun
+    ports:
+      - "127.0.0.1:8112:8112"
+    restart: unless-stopped
+    networks:
+      - media-network
   deluge:
     image: lscr.io/linuxserver/deluge@sha256:9505c64720afa9e5f0ac1576e660dd6d1e9d4a6733b791f4821e8f496f19f41f
     container_name: deluge
+    network_mode: "service:gluetun"
     environment:
       - PUID=1000
       - PGID=1000
@@ -132,11 +156,6 @@ services:
     volumes:
       - ./docker/deluge:/config
       - ./:/data
-    ports:
-      - "8112:8112"
-      - "6881:6881"
-      - "6881:6881/udp"
-      - "58846:58846"
     healthcheck:
       test: ["CMD", "curl", "--fail", "--silent", "--show-error", "http://127.0.0.1:8112"]
       interval: 30s
@@ -144,8 +163,8 @@ services:
       retries: 3
       start_period: 30s
     restart: unless-stopped
-    networks:
-      - media-network
+    depends_on:
+      - gluetun
 
   tailscale:
     image: tailscale/tailscale:latest
