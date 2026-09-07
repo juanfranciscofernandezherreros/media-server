@@ -1,0 +1,32 @@
+# yaml-language-server: $schema=https://schemas.recyclarr.dev/latest/config-schema.json
+#
+# Copy this file to docker/recyclarr/recyclarr.yml and replace the API keys.
+# Do not commit docker/recyclarr/recyclarr.yml because it contains secrets.
+#
+# Recyclarr centralizes Radarr/Sonarr profiles and Custom Formats using
+# configuration files. Start with preview mode before applying changes.
+
+radarr:
+  movies:
+    base_url: http://radarr:7878
+    api_key: REPLACE_WITH_RADARR_API_KEY
+
+    # Start with a conservative profile. Add TRaSH Guide templates and Custom
+    # Formats gradually once Radarr is reachable and backed up.
+    quality_profiles:
+      - name: HD-1080p Español
+        reset_unmatched_scores:
+          enabled: false
+
+sonarr:
+  series:
+    base_url: http://sonarr:8989
+    api_key: REPLACE_WITH_SONARR_API_KEY
+
+    # Sonarr v4 handles language preference through Custom Formats instead of
+    # the old language profiles. Keep this conservative until you confirm the
+    # releases found by your indexers match your Spanish/Castellano preference.
+    quality_profiles:
+      - name: Series HD-1080p Español
+        reset_unmatched_scores:
+          enabled: false
