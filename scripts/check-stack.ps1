@@ -38,7 +38,7 @@ function Invoke-CheckedCommand {
         Write-Ok $Description
     }
     catch {
-        Write-Fail "$Description failed: $($_.Exception.Message)"
+        Write-Fail "${Description} failed: $($_.Exception.Message)"
     }
 }
 
@@ -79,29 +79,29 @@ foreach ($Container in $ExpectedContainers) {
         $Status = docker inspect -f "{{.State.Status}}" $Container 2>$null
 
         if (-not $Status) {
-            Write-Fail "$Container does not exist"
+            Write-Fail "${Container} does not exist"
             continue
         }
 
         if ($Status -ne "running") {
-            Write-Fail "$Container is $Status"
+            Write-Fail "${Container} is ${Status}"
             continue
         }
 
         $Health = docker inspect -f "{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}" $Container 2>$null
 
         if ($Health -eq "healthy" -or $Health -eq "none") {
-            Write-Ok "$Container is running ($Health)"
+            Write-Ok "${Container} is running (${Health})"
         }
         elseif ($Health -eq "starting") {
-            Write-Warn "$Container is running but health is starting"
+            Write-Warn "${Container} is running but health is starting"
         }
         else {
-            Write-Fail "$Container is running but health is $Health"
+            Write-Fail "${Container} is running but health is ${Health}"
         }
     }
     catch {
-        Write-Fail "Could not inspect $Container: $($_.Exception.Message)"
+        Write-Fail "Could not inspect ${Container}: $($_.Exception.Message)"
     }
 }
 
@@ -111,7 +111,7 @@ $VpnIp = $null
 try {
     $VpnIp = (docker exec gluetun wget -qO- https://ipinfo.io/ip).Trim()
     if ($VpnIp) {
-        Write-Ok "Gluetun public IP: $VpnIp"
+        Write-Ok "Gluetun public IP: ${VpnIp}"
     }
     else {
         Write-Fail "Could not get Gluetun public IP"
@@ -126,7 +126,7 @@ Write-Section "Host public IP"
 try {
     $HostIp = (curl.exe -s https://ipinfo.io/ip).Trim()
     if ($HostIp) {
-        Write-Ok "Host public IP: $HostIp"
+        Write-Ok "Host public IP: ${HostIp}"
 
         if ($VpnIp -and $HostIp -eq $VpnIp) {
             Write-Warn "Host IP and Gluetun IP are the same. Check whether the host is also using a VPN."
@@ -183,7 +183,7 @@ try {
 
     foreach ($Pattern in $DangerousPatterns) {
         if ($ComposePs -match [regex]::Escape($Pattern)) {
-            Write-Fail "Dangerous host bind detected: $Pattern"
+            Write-Fail "Dangerous host bind detected: ${Pattern}"
         }
     }
 
