@@ -12,6 +12,37 @@ El diseño actual prioriza privacidad y aprendizaje:
 
 > Este repositorio no incluye contenido multimedia. Utiliza únicamente fuentes y contenido cuya descarga y uso estén permitidos en tu jurisdicción.
 
+## Instalación rápida en Windows
+
+La forma más sencilla de arrancar el proyecto es usar el asistente de instalación:
+
+```powershell
+git clone https://github.com/juanfranciscofernandezherreros/media-server.git
+cd media-server
+powershell -ExecutionPolicy Bypass -File .\scripts\install.ps1
+```
+
+El script realiza estas tareas:
+
+- comprueba que Docker y Docker Compose están disponibles;
+- crea las carpetas necesarias para configuración, descargas y bibliotecas;
+- copia `.env.example` a `.env` si todavía no existe;
+- avisa si faltan las credenciales manuales de NordVPN;
+- valida `docker-compose.yml`;
+- puede arrancar el stack con `docker compose up -d`;
+- muestra los accesos locales principales;
+- recuerda la configuración correcta de Sonarr/Radarr hacia Deluge;
+- puede ejecutar `scripts/check-stack.ps1` al final.
+
+Después de ejecutarlo, edita `.env` si todavía contiene los valores de ejemplo:
+
+```env
+NORDVPN_USER=tu_usuario_manual_de_nordvpn
+NORDVPN_PASSWORD=tu_password_manual_de_nordvpn
+```
+
+Usa las credenciales manuales de servicio de NordVPN para OpenVPN, no tu email ni la contraseña normal de Nord Account.
+
 ## Arquitectura
 
 ```text
@@ -107,14 +138,15 @@ media-server/
 ├── tv/                  # Biblioteca de series
 ├── media/               # Espacio adicional opcional
 ├── observability/       # Prometheus, Loki, Alloy y Grafana
+├── scripts/             # Instalación y diagnóstico
 └── docs/                # Documentación operativa
 ```
 
 Las carpetas con configuración, bases de datos, credenciales, descargas y contenido multimedia deben permanecer fuera de Git.
 
-## Configuración inicial
+## Configuración manual
 
-Copia el archivo de ejemplo:
+Si prefieres no usar `scripts/install.ps1`, copia el archivo de ejemplo:
 
 ```powershell
 Copy-Item .env.example .env
@@ -131,7 +163,13 @@ NORDVPN_PASSWORD=tu_password_manual_de_nordvpn
 
 Las variables `NORDVPN_USER` y `NORDVPN_PASSWORD` son las credenciales manuales de servicio de NordVPN para OpenVPN. No pegues tu contraseña normal de Nord Account.
 
-## Puesta en marcha
+Crea las carpetas de datos si no existen:
+
+```powershell
+New-Item -ItemType Directory -Force docker, downloads, movies, tv, media
+```
+
+## Puesta en marcha manual
 
 ```bash
 git clone https://github.com/juanfranciscofernandezherreros/media-server.git
@@ -154,6 +192,16 @@ docker compose down
 ```
 
 No uses `docker compose down -v` salvo que quieras eliminar datos persistentes.
+
+## Diagnóstico rápido
+
+Después de instalar o cambiar la configuración, ejecuta:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\check-stack.ps1
+```
+
+Este script comprueba Docker, Compose, contenedores, Gluetun/NordVPN, conectividad interna, Jellyfin por Tailscale y puertos publicados peligrosos.
 
 ## Configurar Tailscale
 
