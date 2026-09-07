@@ -121,6 +121,21 @@ services:
     networks:
       - media-network
 
+  recyclarr:
+    image: ghcr.io/recyclarr/recyclarr:8
+    container_name: recyclarr
+    user: "1000:1000"
+    environment:
+      - TZ=Europe/Madrid
+    volumes:
+      - ./docker/recyclarr:/config
+    restart: unless-stopped
+    networks:
+      - media-network
+    depends_on:
+      - sonarr
+      - radarr
+
   gluetun:
     image: qmcgaw/gluetun:latest
     container_name: gluetun
@@ -144,6 +159,7 @@ services:
     restart: unless-stopped
     networks:
       - media-network
+
   deluge:
     image: lscr.io/linuxserver/deluge@sha256:9505c64720afa9e5f0ac1576e660dd6d1e9d4a6733b791f4821e8f496f19f41f
     container_name: deluge
