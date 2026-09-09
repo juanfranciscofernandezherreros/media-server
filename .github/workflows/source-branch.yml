@@ -1,0 +1,21 @@
+name: Enforce release source
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  source-branch:
+    name: Source branch policy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require releases branch
+        shell: bash
+        run: |
+          if [[ "${{ github.head_ref }}" != "releases" ]]; then
+            echo "Only pull requests from the releases branch may merge into main."
+            exit 1
+          fi
