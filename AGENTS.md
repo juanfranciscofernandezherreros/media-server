@@ -20,4 +20,6 @@ Before making any development change in this repository, the agent must:
 5. Create development branches using the exact format `feature/X.Y.Z-short-description`, where `X.Y.Z` is the version supplied by the user and `short-description` is a concise lowercase kebab-case summary. For example: `feature/1.0.1-update-documentation`. Reject names with spaces, underscores, uppercase letters, a missing version, or a prefix other than `feature/`.
 6. Use the exact version and change type supplied by the user for the final GitHub tag and release. Verify that they are SemVer-compatible, but never correct, invent, increment, reuse, tag, or publish a version without explicit user confirmation.
 
+7. After a `feature/*` pull request has been successfully merged into `develop`, delete that feature branch both locally and from `origin`. Never delete the branch before GitHub confirms that the merge succeeded.
+
 These checks are required for every new development task, even when the requested change appears small.
