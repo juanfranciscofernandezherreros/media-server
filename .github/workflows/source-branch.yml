@@ -1,8 +1,8 @@
-name: Enforce promotion flow
+name: Enforce Gitflow
 
 on:
   pull_request:
-    branches: [main, releases, develop]
+    branches: [main, develop]
 
 permissions:
   contents: read
@@ -20,19 +20,16 @@ jobs:
         run: |
           case "$BASE_BRANCH" in
             main)
-              [[ "$HEAD_BRANCH" == "releases" ]]
-              ;;
-            releases)
-              [[ "$HEAD_BRANCH" == "develop" ]]
+              [[ "$HEAD_BRANCH" == release/* || "$HEAD_BRANCH" == hotfix/* ]]
               ;;
             develop)
-              [[ "$HEAD_BRANCH" == feature/* ]]
+              [[ "$HEAD_BRANCH" == feature/* || "$HEAD_BRANCH" == release/* || "$HEAD_BRANCH" == hotfix/* ]]
               ;;
             *)
               exit 1
               ;;
           esac || {
             echo "Invalid promotion path: $HEAD_BRANCH -> $BASE_BRANCH"
-            echo "Required flow: feature/* -> develop -> releases -> main"
+            echo "Required Gitflow: feature/* -> develop; release/* or hotfix/* -> main and develop"
             exit 1
           }

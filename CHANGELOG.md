@@ -4,6 +4,14 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-09-09
+
+### Changed
+
+- Adopted canonical Gitflow with only `main` and `develop` as permanent branches.
+- Added temporary versioned `feature/*`, `release/*`, and `hotfix/*` branch rules.
+- Updated branch-policy automation and repository documentation for the new promotion paths.
+
 ### Added
 
 - Documentation for the private Tailscale media-server deployment.
