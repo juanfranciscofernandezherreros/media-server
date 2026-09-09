@@ -1,8 +1,8 @@
-name: Enforce release source
+name: Enforce promotion flow
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, releases, develop]
 
 permissions:
   contents: read
@@ -11,11 +11,28 @@ jobs:
   source-branch:
     name: Source branch policy
     runs-on: ubuntu-latest
+    env:
+      BASE_BRANCH: ${{ github.base_ref }}
+      HEAD_BRANCH: ${{ github.head_ref }}
     steps:
-      - name: Require releases branch
+      - name: Validate source branch
         shell: bash
         run: |
-          if [[ "${{ github.head_ref }}" != "releases" ]]; then
-            echo "Only pull requests from the releases branch may merge into main."
+          case "$BASE_BRANCH" in
+            main)
+              [[ "$HEAD_BRANCH" == "releases" ]]
+              ;;
+            releases)
+              [[ "$HEAD_BRANCH" == "develop" ]]
+              ;;
+            develop)
+              [[ "$HEAD_BRANCH" == feature/* ]]
+              ;;
+            *)
+              exit 1
+              ;;
+          esac || {
+            echo "Invalid promotion path: $HEAD_BRANCH -> $BASE_BRANCH"
+            echo "Required flow: feature/* -> develop -> releases -> main"
             exit 1
-          fi
+          }
