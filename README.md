@@ -540,18 +540,20 @@ docker compose restart gluetun deluge sonarr radarr
 
 ## Flujo de desarrollo
 
-Los cambios se promocionan siempre mediante pull requests siguiendo este recorrido:
+Solo `main` y `develop` son ramas permanentes. El repositorio sigue Gitflow:
 
 ```text
-feature/* → develop → releases → main
+feature/X.Y.Z-descripcion → develop
+develop → release/X.Y.Z → main y develop → tag/release vX.Y.Z
+main → hotfix/X.Y.Z-descripcion → main y develop → tag/release vX.Y.Z
 ```
 
-1. Crea una rama `feature/<nombre>` desde `develop` y realiza allí el desarrollo.
-2. Abre un pull request de `feature/<nombre>` hacia `develop`.
-3. Promociona `develop` hacia `releases` mediante otro pull request.
-4. Publica `releases` en `main` mediante el pull request final.
+1. Crea cada `feature/X.Y.Z-descripcion` desde `develop`, abre un pull request hacia `develop` y elimina la feature después del merge.
+2. Para publicar, crea `release/X.Y.Z` desde `develop`, valida la versión y fusiónala mediante pull requests en `main` y `develop`.
+3. Para una corrección urgente, crea `hotfix/X.Y.Z-descripcion` desde `main` y fusiónala en `main` y `develop`.
+4. Crea el tag `vX.Y.Z` y la GitHub Release únicamente después de que el cambio llegue a `main`; elimina después la rama temporal `release/*` o `hotfix/*`.
 
-GitHub protege `develop`, `releases` y `main`: rechaza saltos entre etapas, exige que la comprobación automática termine correctamente y requiere aprobación y conversaciones resueltas antes de cada merge.
+GitHub protege `develop` y `main`: rechaza rutas no permitidas, exige que las comprobaciones automáticas terminen correctamente y requiere que las conversaciones estén resueltas antes de cada merge.
 
 ## Documentación adicional
 
