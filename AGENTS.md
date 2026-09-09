@@ -2,7 +2,7 @@
 
 Before making any development change in this repository, the agent must:
 
-1. Stop and ask the user for the exact semantic version in `X.Y.Z` format. Do not edit files, create a development branch, commit, push, or open a pull request until the user provides it.
+1. Stop and ask the user for both the exact semantic version in `X.Y.Z` format and the intended change type: `major`, `minor`, or `patch`. Do not infer the change type or calculate, increment, tag, or publish a version automatically. Do not edit files, create a development branch, commit, push, or open a pull request until the user explicitly provides both values.
 2. Switch to `main` and synchronize it using:
 
    ```bash
@@ -18,6 +18,6 @@ Before making any development change in this repository, the agent must:
    ```
 
 5. Create development branches using the exact format `feature/X.Y.Z-short-description`, where `X.Y.Z` is the version supplied by the user and `short-description` is a concise lowercase kebab-case summary. For example: `feature/1.0.1-update-documentation`. Reject names with spaces, underscores, uppercase letters, a missing version, or a prefix other than `feature/`.
-6. Use the version supplied by the user for the final GitHub tag and release. Never invent, increment, or reuse a version without explicit user confirmation.
+6. Use the exact version and change type supplied by the user for the final GitHub tag and release. Verify that they are SemVer-compatible, but never correct, invent, increment, reuse, tag, or publish a version without explicit user confirmation.
 
 These checks are required for every new development task, even when the requested change appears small.
