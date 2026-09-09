@@ -538,6 +538,21 @@ docker compose config
 docker compose restart gluetun deluge sonarr radarr
 ```
 
+## Flujo de desarrollo
+
+Los cambios se promocionan siempre mediante pull requests siguiendo este recorrido:
+
+```text
+feature/* → develop → releases → main
+```
+
+1. Crea una rama `feature/<nombre>` desde `develop` y realiza allí el desarrollo.
+2. Abre un pull request de `feature/<nombre>` hacia `develop`.
+3. Promociona `develop` hacia `releases` mediante otro pull request.
+4. Publica `releases` en `main` mediante el pull request final.
+
+GitHub protege `develop`, `releases` y `main`: rechaza saltos entre etapas, exige que la comprobación automática termine correctamente y requiere aprobación y conversaciones resueltas antes de cada merge.
+
 ## Documentación adicional
 
 - `docs/architecture.md`: arquitectura y decisiones de diseño.
