@@ -1,6 +1,6 @@
 services:
   jellyfin:
-    image: jellyfin/jellyfin@sha256:aefb67e6a7ff1debdd154a78a7bbb780fd0c873d8639210a7f6a2016ad2b35db
+    image: jellyfin/jellyfin@sha256:baba630419915985442f315f08b0cf46d9f4c8a0cc4bd38e94a6d35751dd5ef5
     container_name: jellyfin
     network_mode: "service:tailscale"
     environment:
@@ -35,7 +35,7 @@ services:
       - media-network
 
   bazarr:
-    image: lscr.io/linuxserver/bazarr@sha256:a20fb11a440d704a9d61c283aa26462aad33dc63223b173f8d8c77d33e8e9d59
+    image: lscr.io/linuxserver/bazarr@sha256:84b6f05a7a4194fafe5a0bec062d32f6ae9ea74db33d43d678cb9a3191f31c24
     container_name: bazarr
     environment:
       - PUID=1000
@@ -57,7 +57,7 @@ services:
       - media-network
 
   sonarr:
-    image: lscr.io/linuxserver/sonarr@sha256:c19aa4ecdf03d73e1d5c901da33744cb7eb4d921f89bafed1ca264601d7fa224
+    image: lscr.io/linuxserver/sonarr@sha256:82172b363f9eddc02aca544f880a044f2ceb9aaf190bc87e4454e2f705eb91d0
     container_name: sonarr
     environment:
       - PUID=1000
@@ -79,7 +79,7 @@ services:
       - media-network
 
   radarr:
-    image: lscr.io/linuxserver/radarr@sha256:119aaa4a4f7349bcd2a136c5373a0d7925b5479915c7dfe0c0ad352db2a6d438
+    image: lscr.io/linuxserver/radarr@sha256:95ba0801df4d9d1d79d0d9a3849f656542497dab061d91b87ad4f53a71aff3ef
     container_name: radarr
     environment:
       - PUID=1000
@@ -101,7 +101,7 @@ services:
       - media-network
 
   prowlarr:
-    image: lscr.io/linuxserver/prowlarr@sha256:91844fa2c927ad6ede5630127183cc7868b175f6223e83e6a5da1fffea2aa782
+    image: lscr.io/linuxserver/prowlarr@sha256:c7502a75b021d964481c129c84590b9cbc40f83aadd4e553f173871bc0deaa3c
     container_name: prowlarr
     environment:
       - PUID=1000

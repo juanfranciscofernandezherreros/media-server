@@ -2,7 +2,7 @@ name: media-observability
 
 services:
   grafana:
-    image: grafana/grafana:13.1.0
+    image: grafana/grafana:13.2.1
     container_name: grafana
     environment:
       - GF_SECURITY_ADMIN_USER=admin
@@ -17,7 +17,7 @@ services:
     restart: unless-stopped
 
   prometheus:
-    image: prom/prometheus:v3.10.0
+    image: prom/prometheus:v3.14.0
     container_name: prometheus
     command:
       - --config.file=/etc/prometheus/prometheus.yml
@@ -31,7 +31,7 @@ services:
     restart: unless-stopped
 
   loki:
-    image: grafana/loki:3.7.0
+    image: grafana/loki:3.7.7
     container_name: loki
     command: -config.file=/etc/loki/local-config.yaml
     volumes:
@@ -42,7 +42,7 @@ services:
     restart: unless-stopped
 
   alloy:
-    image: grafana/alloy:v1.18.0
+    image: grafana/alloy:v1.19.2
     container_name: alloy
     command: run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
     volumes:
@@ -54,7 +54,7 @@ services:
     restart: unless-stopped
 
   cadvisor:
-    image: ghcr.io/google/cadvisor:v0.57.0
+    image: ghcr.io/google/cadvisor:v0.60.5
     container_name: cadvisor
     privileged: true
     volumes:
