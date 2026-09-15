@@ -4,6 +4,13 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-09-15
+
+### Changed
+
+- Configured the Tailscale container to use kernel TUN networking instead of userspace networking.
+- Declared `/dev/net/tun` as a Docker device while retaining the required network capabilities.
+
 ## [2.0.0] - 2026-09-09
 
 ### Changed
