@@ -30,7 +30,7 @@ Preserve the exact user-supplied version, SemVer impact, and work type throughou
 
 ## Required synchronization and safety checks
 
-Before every development change, including a feature or bugfix, first switch to `main` and run:
+At the start of each development task or Gitflow workflow, before its first state-changing operation, first switch to `main` and run:
 
 ```bash
 git fetch origin
@@ -102,7 +102,7 @@ Create branches only in these formats:
 - `hotfix/X.Y.Z-short-description` from synchronized `main` for confirmed `hotfix` work;
 - `release/X.Y.Z` from synchronized `develop` to prepare an authorized release.
 
-In every format, `X.Y.Z` is the exact user-supplied version. `short-description` must be lowercase kebab-case, with no spaces, underscores, or uppercase letters. Reject a branch name with a missing version, invalid description, or a prefix that does not exactly match the confirmed work type.
+In every format, `X.Y.Z` is the exact user-supplied version. For `feature/*`, `bugfix/*`, and `hotfix/*`, `short-description` must be lowercase kebab-case, with no spaces, underscores, or uppercase letters, and the prefix must exactly match the confirmed work type. `release/X.Y.Z` is an authorized promotion branch, not a user work type, and is exempt from that prefix comparison. Reject a branch name with a missing version or invalid description.
 
 ## Merge and promotion policy
 
