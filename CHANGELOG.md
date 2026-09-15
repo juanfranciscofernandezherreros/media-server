@@ -4,6 +4,18 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+## [2.3.0] - 2026-09-15
+
+### Changed
+
+- Required every release and hotfix publication to update `CHANGELOG.md` before the final tag and GitHub Release are created.
+- Required release entries to record the temporary branch, pull requests, confirmed merges, required checks, final tag, and GitHub Release publication.
+
+### Release workflow
+
+- Created `release/2.3.0` from clean, synchronized `develop`.
+- Promotion will be reviewed and merged into `main`, then integrated back into `develop` without rebase after required checks pass.
+- The final tag will be `v2.3.0` and the GitHub Release will be published from `main` after the promotion completes.
 ## [2.1.1] - 2026-09-15
 
 ### Fixed
