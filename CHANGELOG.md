@@ -4,6 +4,13 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+## [2.1.1] - 2026-09-15
+
+### Fixed
+
+- Required every feature branch to originate from a clean, synchronized `develop` branch.
+- Corrected the documented Gitflow diagram and synchronization sequence.
+
 ## [2.1.0] - 2026-09-15
 
 ### Changed
