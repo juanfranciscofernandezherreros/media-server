@@ -14,8 +14,9 @@ All notable changes to this project are documented here.
 ### Release workflow
 
 - Created `release/2.3.0` from clean, synchronized `develop`.
-- Promotion will be reviewed and merged into `main`, then integrated back into `develop` without rebase after required checks pass.
-- The final tag will be `v2.3.0` and the GitHub Release will be published from `main` after the promotion completes.
+- Merged promotion PR [#34](https://github.com/juanfranciscofernandezherreros/media-server/pull/34) into `main` after `Source branch policy` and `validate` passed.
+- Merged integration PR [#35](https://github.com/juanfranciscofernandezherreros/media-server/pull/35) into `develop` after `Source branch policy` and `validate` passed, without rebase.
+- The final tag is `v2.3.0`; the GitHub Release is authorized to be published from `main` after this changelog record is included there.
 ## [2.1.1] - 2026-09-15
 
 ### Fixed
