@@ -23,13 +23,13 @@ jobs:
               [[ "$HEAD_BRANCH" == release/* || "$HEAD_BRANCH" == hotfix/* ]]
               ;;
             develop)
-              [[ "$HEAD_BRANCH" == feature/* || "$HEAD_BRANCH" == release/* || "$HEAD_BRANCH" == hotfix/* ]]
+              [[ "$HEAD_BRANCH" == feature/* || "$HEAD_BRANCH" == bugfix/* || "$HEAD_BRANCH" == release/* || "$HEAD_BRANCH" == hotfix/* ]]
               ;;
             *)
               exit 1
               ;;
           esac || {
             echo "Invalid promotion path: $HEAD_BRANCH -> $BASE_BRANCH"
-            echo "Required Gitflow: feature/* -> develop; release/* or hotfix/* -> main and develop"
+            echo "Required Gitflow: feature/* or bugfix/* -> develop; release/* or hotfix/* -> main and develop"
             exit 1
           }
