@@ -112,6 +112,8 @@ For `feature/*` and `bugfix/*`, use the pull-request policy configured by the re
 
 For `release/*` and `hotfix/*` promotions, do not use rebase. Preserve an auditable Gitflow history. A release branch is temporary: create `release/X.Y.Z` from `develop`, integrate it into both `main` and `develop`, then delete it locally and from `origin` only after the required merges and authorized publication are complete. A hotfix branch is likewise temporary: create it from `main`, integrate it into both `main` and `develop`, then delete it locally and from `origin` only after confirmed merges and authorized publication.
 
+For every release or hotfix publication, update `CHANGELOG.md` on the corresponding temporary branch and include that change in the promotion to `main`. The `vX.Y.Z` entry must record the release workflow steps performed: branch creation, pull requests and confirmed merges into `main` and `develop`, required check outcomes, the final tag, and the GitHub Release publication. Keep the entry accurate as the workflow progresses; do not create the final tag or GitHub Release until the required `CHANGELOG.md` update is committed and included in `main`.
+
 ## Separate authorization boundaries
 
 Development work, release promotion, and version publication are separate actions. Completing a feature or bugfix and merging it into `develop` does not authorize release preparation or publication. After that merge, stop unless the user explicitly instructs otherwise. Do not automatically create `release/X.Y.Z`, merge to `main`, create `vX.Y.Z`, or publish a GitHub Release.
