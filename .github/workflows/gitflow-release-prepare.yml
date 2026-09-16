@@ -1,0 +1,234 @@
+name: Prepare Gitflow release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Exact semantic version (X.Y.Z)
+        required: true
+        type: string
+      impact:
+        description: SemVer impact confirmed for this release
+        required: true
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+      confirmation:
+        description: Type PREPARE vX.Y.Z to authorize release promotion
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+  checks: read
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITFLOW_AUTOMATION_TOKEN }}
+      VERSION: ${{ inputs.version }}
+      IMPACT: ${{ inputs.impact }}
+      CONFIRMATION: ${{ inputs.confirmation }}
+      REPOSITORY: ${{ github.repository }}
+    steps:
+      - name: Require automation token
+        shell: bash
+        run: |
+          [[ -n "$GH_TOKEN" ]] || {
+            echo "Repository secret GITFLOW_AUTOMATION_TOKEN is required."
+            echo "Use a token that can write contents and pull requests so PR-created events run the normal checks."
+            exit 1
+          }
+
+      - name: Check out main with full history
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITFLOW_AUTOMATION_TOKEN }}
+          fetch-depth: 0
+          ref: main
+
+      - name: Validate authorization, version, and repository state
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || {
+            echo "Version must use X.Y.Z format."
+            exit 1
+          }
+          [[ "$CONFIRMATION" == "PREPARE v$VERSION" ]] || {
+            echo "Confirmation must be exactly: PREPARE v$VERSION"
+            exit 1
+          }
+          [[ -z "$(git status --porcelain)" ]] || {
+            echo "Working tree is not clean."
+            exit 1
+          }
+
+          git fetch origin main develop --tags
+          [[ "$(git rev-parse main)" == "$(git rev-parse origin/main)" ]] || {
+            echo "main is not synchronized with origin/main."
+            exit 1
+          }
+
+          latest_tag="$(gh api "repos/$REPOSITORY/releases/latest" --jq .tag_name)"
+          latest="${latest_tag#v}"
+          python3 - "$latest" "$VERSION" "$IMPACT" <<'PY'
+          import sys
+
+          latest = tuple(map(int, sys.argv[1].split('.')))
+          requested = tuple(map(int, sys.argv[2].split('.')))
+          impact = sys.argv[3]
+          expected = {
+              'major': (latest[0] + 1, 0, 0),
+              'minor': (latest[0], latest[1] + 1, 0),
+              'patch': (latest[0], latest[1], latest[2] + 1),
+          }[impact]
+          if requested != expected:
+              raise SystemExit(
+                  f"Requested version {sys.argv[2]} is not the expected {impact} version after {sys.argv[1]}."
+              )
+          PY
+
+          if gh api "repos/$REPOSITORY/git/ref/tags/v$VERSION" >/dev/null 2>&1; then
+            echo "Tag v$VERSION already exists."
+            exit 1
+          fi
+          if gh api "repos/$REPOSITORY/releases/tags/v$VERSION" >/dev/null 2>&1; then
+            echo "Release v$VERSION already exists."
+            exit 1
+          fi
+          if gh api "repos/$REPOSITORY/git/ref/heads/release/$VERSION" >/dev/null 2>&1; then
+            echo "release/$VERSION already exists."
+            exit 1
+          fi
+
+      - name: Create release branch and initial changelog entry
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch --create "release/$VERSION" "origin/develop"
+
+          python3 - "$VERSION" <<'PY'
+          from datetime import date
+          from pathlib import Path
+          import sys
+
+          version = sys.argv[1]
+          path = Path('CHANGELOG.md')
+          text = path.read_text()
+          marker = '## [Unreleased]\n'
+          if f'## [{version}]' in text:
+              raise SystemExit(f'CHANGELOG already contains {version}')
+          entry = f'''\n## [{version}] - {date.today().isoformat()}\n\n### Release workflow\n\n- Created `release/{version}` from synchronized `develop`.\n- Promotion and integration pull requests are being handled by Gitflow automation.\n- The final tag will be `v{version}`; GitHub Release publication still requires separate explicit authorization.\n'''
+          path.write_text(text.replace(marker, marker + entry, 1))
+          PY
+
+          git add CHANGELOG.md
+          git commit -m "release: prepare $VERSION changelog"
+          git push --set-upstream origin "release/$VERSION"
+
+      - name: Open promotion pull requests
+        id: prs
+        shell: bash
+        run: |
+          set -euo pipefail
+          main_url="$(gh pr create \
+            --base main \
+            --head "release/$VERSION" \
+            --title "release: $VERSION" \
+            --body "Automated Gitflow promotion for v$VERSION. Required checks must pass before merge.")"
+          develop_url="$(gh pr create \
+            --base develop \
+            --head "release/$VERSION" \
+            --title "release: integrate $VERSION into develop" \
+            --body "Automated Gitflow integration for v$VERSION. Required checks must pass before merge.")"
+
+          main_number="${main_url##*/}"
+          develop_number="${develop_url##*/}"
+          echo "main=$main_number" >> "$GITHUB_OUTPUT"
+          echo "develop=$develop_number" >> "$GITHUB_OUTPUT"
+
+      - name: Wait for checks and merge promotion pull requests
+        shell: bash
+        run: |
+          set -euo pipefail
+          main_pr="${{ steps.prs.outputs.main }}"
+          develop_pr="${{ steps.prs.outputs.develop }}"
+
+          gh pr checks "$main_pr" --watch --interval 10
+          gh pr merge "$main_pr" --merge
+
+          gh pr checks "$develop_pr" --watch --interval 10
+          gh pr merge "$develop_pr" --merge
+
+      - name: Finalize changelog with confirmed promotion results
+        shell: bash
+        run: |
+          set -euo pipefail
+          main_pr="${{ steps.prs.outputs.main }}"
+          develop_pr="${{ steps.prs.outputs.develop }}"
+
+          python3 - "$VERSION" "$main_pr" "$develop_pr" <<'PY'
+          from pathlib import Path
+          import re
+          import sys
+
+          version, main_pr, develop_pr = sys.argv[1:]
+          path = Path('CHANGELOG.md')
+          text = path.read_text()
+          pattern = rf'(## \[{re.escape(version)}\].*?)(?=\n## \[|\Z)'
+          replacement = f'''## [{version}] - {__import__('datetime').date.today().isoformat()}\n\n### Release workflow\n\n- Created `release/{version}` from synchronized `develop`.\n- Merged promotion PR [#{main_pr}](https://github.com/${{GITHUB_REPOSITORY}}/pull/{main_pr}) into `main` after required checks passed.\n- Merged integration PR [#{develop_pr}](https://github.com/${{GITHUB_REPOSITORY}}/pull/{develop_pr}) into `develop` after required checks passed, without rebase.\n- The final tag is `v{version}`; the GitHub Release is authorized to be published from `main` only after a separate explicit publication action.\n'''
+          updated, count = re.subn(pattern, replacement.rstrip(), text, count=1, flags=re.S)
+          if count != 1:
+              raise SystemExit('Could not locate release changelog entry')
+          path.write_text(updated)
+          PY
+
+          git add CHANGELOG.md
+          git commit -m "docs: finalize $VERSION release changelog"
+          git push origin "release/$VERSION"
+
+      - name: Open and merge changelog finalization pull requests
+        id: final
+        shell: bash
+        run: |
+          set -euo pipefail
+          main_url="$(gh pr create \
+            --base main \
+            --head "release/$VERSION" \
+            --title "docs: finalize $VERSION release changelog" \
+            --body "Records the completed promotion checks and merges before publication of v$VERSION.")"
+          main_pr="${main_url##*/}"
+          gh pr checks "$main_pr" --watch --interval 10
+          gh pr merge "$main_pr" --merge
+
+          develop_url="$(gh pr create \
+            --base develop \
+            --head "release/$VERSION" \
+            --title "docs: sync $VERSION release changelog to develop" \
+            --body "Synchronizes the finalized v$VERSION release record back to develop.")"
+          develop_pr="${develop_url##*/}"
+          gh pr checks "$develop_pr" --watch --interval 10
+          gh pr merge "$develop_pr" --merge
+
+          echo "main=$main_pr" >> "$GITHUB_OUTPUT"
+          echo "develop=$develop_pr" >> "$GITHUB_OUTPUT"
+
+      - name: Write release-preparation summary
+        shell: bash
+        run: |
+          {
+            echo "## Release v$VERSION prepared"
+            echo
+            echo "Promotion and changelog PRs have passed their checks and been merged into both permanent branches."
+            echo "No tag or GitHub Release has been created."
+            echo
+            echo "Publication still requires a separate manual run of **Publish Gitflow release** with confirmation \`PUBLISH v$VERSION\`."
+          } >> "$GITHUB_STEP_SUMMARY"
