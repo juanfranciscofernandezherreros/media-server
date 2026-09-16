@@ -9,6 +9,8 @@ services:
       - ./docker/jellyfin:/config
       - ./docker/jellyfin-cache:/cache
       - ./:/data
+    security_opt:
+      - no-new-privileges:true
     restart: unless-stopped
     depends_on:
       - tailscale
@@ -30,6 +32,8 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
+    security_opt:
+      - no-new-privileges:true
     restart: unless-stopped
     networks:
       - media-network
@@ -52,6 +56,8 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
+    security_opt:
+      - no-new-privileges:true
     restart: unless-stopped
     networks:
       - media-network
@@ -74,6 +80,8 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
+    security_opt:
+      - no-new-privileges:true
     restart: unless-stopped
     networks:
       - media-network
@@ -96,6 +104,8 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
+    security_opt:
+      - no-new-privileges:true
     restart: unless-stopped
     networks:
       - media-network
@@ -117,12 +127,14 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
+    security_opt:
+      - no-new-privileges:true
     restart: unless-stopped
     networks:
       - media-network
 
   gluetun:
-    image: qmcgaw/gluetun:latest
+    image: qmcgaw/gluetun:v3.41.3
     container_name: gluetun
     cap_add:
       - NET_ADMIN
@@ -144,6 +156,7 @@ services:
     restart: unless-stopped
     networks:
       - media-network
+
   deluge:
     image: lscr.io/linuxserver/deluge@sha256:9505c64720afa9e5f0ac1576e660dd6d1e9d4a6733b791f4821e8f496f19f41f
     container_name: deluge
@@ -162,12 +175,14 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
+    security_opt:
+      - no-new-privileges:true
     restart: unless-stopped
     depends_on:
       - gluetun
 
   tailscale:
-    image: tailscale/tailscale:latest
+    image: tailscale/tailscale:v1.102.3
     container_name: tailscale
     hostname: media-server-share
     environment:
@@ -180,21 +195,29 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
-    ports:
-      - "8096:8096"
     restart: unless-stopped
     networks:
       - media-network
 
   samba:
-    image: dperson/samba
+    image: ghcr.io/servercontainers/samba:smbd-only-a3.24.1-s4.23.8-r0
     container_name: samba
     network_mode: "service:tailscale"
     environment:
-      - TZ=Europe/Madrid
+      TZ: Europe/Madrid
+      ACCOUNT_media: ${SAMBA_PASSWORD}
+      UID_media: 1000
+      SAMBA_VOLUME_CONFIG_descargas: >
+        [Descargas];
+        path=/shares/descargas;
+        valid users=media;
+        guest ok=no;
+        read only=yes;
+        browseable=yes
     volumes:
-      - ./:/data:ro
-    command: -s "Descargas;/data;yes;yes;yes"
+      - ./:/shares/descargas:ro
+    security_opt:
+      - no-new-privileges:true
     restart: unless-stopped
     depends_on:
       - tailscale

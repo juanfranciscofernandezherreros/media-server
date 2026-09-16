@@ -1,0 +1,117 @@
+name: Publish Gitflow release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Exact semantic version (X.Y.Z)
+        required: true
+        type: string
+      confirmation:
+        description: Type PUBLISH vX.Y.Z to authorize tag and GitHub Release publication
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      VERSION: ${{ inputs.version }}
+      CONFIRMATION: ${{ inputs.confirmation }}
+      REPOSITORY: ${{ github.repository }}
+    steps:
+      - name: Check out main with full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+
+      - name: Validate explicit publication authorization
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || {
+            echo "Version must use X.Y.Z format."
+            exit 1
+          }
+          [[ "$CONFIRMATION" == "PUBLISH v$VERSION" ]] || {
+            echo "Confirmation must be exactly: PUBLISH v$VERSION"
+            exit 1
+          }
+
+          git fetch origin main develop --tags
+          [[ "$(git rev-parse HEAD)" == "$(git rev-parse origin/main)" ]] || {
+            echo "main is not synchronized with origin/main."
+            exit 1
+          }
+          [[ -z "$(git status --porcelain)" ]] || {
+            echo "Working tree is not clean."
+            exit 1
+          }
+
+          if gh api "repos/$REPOSITORY/git/ref/tags/v$VERSION" >/dev/null 2>&1; then
+            echo "Tag v$VERSION already exists."
+            exit 1
+          fi
+          if gh api "repos/$REPOSITORY/releases/tags/v$VERSION" >/dev/null 2>&1; then
+            echo "Release v$VERSION already exists."
+            exit 1
+          fi
+
+          main_pr="$(gh pr list --state merged --base main --head "release/$VERSION" --json number --jq '.[0].number // empty')"
+          develop_pr="$(gh pr list --state merged --base develop --head "release/$VERSION" --json number --jq '.[0].number // empty')"
+          [[ -n "$main_pr" && -n "$develop_pr" ]] || {
+            echo "release/$VERSION must already have confirmed merges into both main and develop."
+            exit 1
+          }
+
+          grep -F "## [$VERSION]" CHANGELOG.md >/dev/null || {
+            echo "CHANGELOG.md on main does not contain v$VERSION."
+            exit 1
+          }
+          grep -F "The final tag is \`v$VERSION\`" CHANGELOG.md >/dev/null || {
+            echo "CHANGELOG.md does not contain the finalized v$VERSION release record."
+            exit 1
+          }
+
+      - name: Create final tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "v$VERSION" -m "Release v$VERSION"
+          git push origin "v$VERSION"
+
+      - name: Publish GitHub Release
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release create "v$VERSION" \
+            --target main \
+            --title "v$VERSION" \
+            --generate-notes
+
+      - name: Delete temporary release branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh api "repos/$REPOSITORY/git/ref/heads/release/$VERSION" >/dev/null 2>&1; then
+            gh api --method DELETE "repos/$REPOSITORY/git/refs/heads/release/$VERSION"
+          fi
+
+      - name: Write publication summary
+        shell: bash
+        run: |
+          {
+            echo "## Published v$VERSION"
+            echo
+            echo "- Tag: \`v$VERSION\`"
+            echo "- GitHub Release: published from \`main\`"
+            echo "- Temporary branch: \`release/$VERSION\` deleted"
+          } >> "$GITHUB_STEP_SUMMARY"
