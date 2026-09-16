@@ -1,0 +1,133 @@
+name: Start Gitflow work
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Exact semantic version (X.Y.Z)
+        required: true
+        type: string
+      impact:
+        description: SemVer impact
+        required: true
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+      work_type:
+        description: Work type
+        required: true
+        type: choice
+        options:
+          - feature
+          - bugfix
+          - hotfix
+      description:
+        description: Lowercase kebab-case branch description
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  create-branch:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      VERSION: ${{ inputs.version }}
+      IMPACT: ${{ inputs.impact }}
+      WORK_TYPE: ${{ inputs.work_type }}
+      DESCRIPTION: ${{ inputs.description }}
+      REPOSITORY: ${{ github.repository }}
+    steps:
+      - name: Validate requested work
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || {
+            echo "Version must use X.Y.Z format."
+            exit 1
+          }
+          [[ "$DESCRIPTION" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]] || {
+            echo "Description must be lowercase kebab-case."
+            exit 1
+          }
+
+          latest_tag="$(gh api "repos/$REPOSITORY/releases/latest" --jq .tag_name)"
+          latest="${latest_tag#v}"
+
+          python3 - "$latest" "$VERSION" "$IMPACT" <<'PY'
+          import sys
+
+          latest = tuple(map(int, sys.argv[1].split('.')))
+          requested = tuple(map(int, sys.argv[2].split('.')))
+          impact = sys.argv[3]
+
+          if impact == 'major':
+              expected = (latest[0] + 1, 0, 0)
+          elif impact == 'minor':
+              expected = (latest[0], latest[1] + 1, 0)
+          else:
+              expected = (latest[0], latest[1], latest[2] + 1)
+
+          if requested != expected:
+              raise SystemExit(
+                  f"{requested[0]}.{requested[1]}.{requested[2]} is not the expected "
+                  f"{impact} version after {latest[0]}.{latest[1]}.{latest[2]}; "
+                  f"expected {expected[0]}.{expected[1]}.{expected[2]}."
+              )
+          PY
+
+          if gh api "repos/$REPOSITORY/git/ref/tags/v$VERSION" >/dev/null 2>&1; then
+            echo "Tag v$VERSION already exists."
+            exit 1
+          fi
+          if gh api "repos/$REPOSITORY/releases/tags/v$VERSION" >/dev/null 2>&1; then
+            echo "Release v$VERSION already exists."
+            exit 1
+          fi
+
+      - name: Create correctly based development branch
+        id: branch
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ "$WORK_TYPE" == "hotfix" ]]; then
+            base="main"
+          else
+            base="develop"
+          fi
+
+          branch="$WORK_TYPE/$VERSION-$DESCRIPTION"
+
+          if gh api "repos/$REPOSITORY/git/ref/heads/$branch" >/dev/null 2>&1; then
+            echo "Branch $branch already exists."
+            exit 1
+          fi
+
+          base_sha="$(gh api "repos/$REPOSITORY/git/ref/heads/$base" --jq .object.sha)"
+          gh api --method POST "repos/$REPOSITORY/git/refs" \
+            -f ref="refs/heads/$branch" \
+            -f sha="$base_sha" >/dev/null
+
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+          echo "base=$base" >> "$GITHUB_OUTPUT"
+          echo "sha=$base_sha" >> "$GITHUB_OUTPUT"
+
+      - name: Write summary
+        shell: bash
+        run: |
+          {
+            echo "## Gitflow branch created"
+            echo
+            echo "- Version: \`$VERSION\`"
+            echo "- Impact: \`$IMPACT\`"
+            echo "- Work type: \`$WORK_TYPE\`"
+            echo "- Branch: \`${{ steps.branch.outputs.branch }}\`"
+            echo "- Base: \`${{ steps.branch.outputs.base }}\`"
+            echo "- Base SHA: \`${{ steps.branch.outputs.sha }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
