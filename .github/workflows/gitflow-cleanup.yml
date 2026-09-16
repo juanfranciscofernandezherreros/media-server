@@ -1,0 +1,33 @@
+name: Clean merged Gitflow branch
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [develop]
+
+permissions:
+  contents: write
+
+jobs:
+  delete-branch:
+    if: >-
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      (startsWith(github.event.pull_request.head.ref, 'feature/') ||
+       startsWith(github.event.pull_request.head.ref, 'bugfix/'))
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPOSITORY: ${{ github.repository }}
+      HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
+    steps:
+      - name: Delete merged remote branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api --method DELETE "repos/$REPOSITORY/git/refs/heads/$HEAD_BRANCH"
+
+      - name: Write summary
+        shell: bash
+        run: |
+          echo "Deleted merged branch \`$HEAD_BRANCH\`." >> "$GITHUB_STEP_SUMMARY"
