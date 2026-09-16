@@ -176,15 +176,18 @@ jobs:
           develop_pr="${{ steps.prs.outputs.develop }}"
 
           python3 - "$VERSION" "$main_pr" "$develop_pr" <<'PY'
+          from datetime import date
           from pathlib import Path
+          import os
           import re
           import sys
 
           version, main_pr, develop_pr = sys.argv[1:]
+          repository = os.environ['REPOSITORY']
           path = Path('CHANGELOG.md')
           text = path.read_text()
           pattern = rf'(## \[{re.escape(version)}\].*?)(?=\n## \[|\Z)'
-          replacement = f'''## [{version}] - {__import__('datetime').date.today().isoformat()}\n\n### Release workflow\n\n- Created `release/{version}` from synchronized `develop`.\n- Merged promotion PR [#{main_pr}](https://github.com/${{GITHUB_REPOSITORY}}/pull/{main_pr}) into `main` after required checks passed.\n- Merged integration PR [#{develop_pr}](https://github.com/${{GITHUB_REPOSITORY}}/pull/{develop_pr}) into `develop` after required checks passed, without rebase.\n- The final tag is `v{version}`; the GitHub Release is authorized to be published from `main` only after a separate explicit publication action.\n'''
+          replacement = f'''## [{version}] - {date.today().isoformat()}\n\n### Release workflow\n\n- Created `release/{version}` from synchronized `develop`.\n- Merged promotion PR [#{main_pr}](https://github.com/{repository}/pull/{main_pr}) into `main` after required checks passed.\n- Merged integration PR [#{develop_pr}](https://github.com/{repository}/pull/{develop_pr}) into `develop` after required checks passed, without rebase.\n- The final tag is `v{version}`; the GitHub Release is authorized to be published from `main` only after a separate explicit publication action.\n'''
           updated, count = re.subn(pattern, replacement.rstrip(), text, count=1, flags=re.S)
           if count != 1:
               raise SystemExit('Could not locate release changelog entry')
