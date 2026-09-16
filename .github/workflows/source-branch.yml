@@ -18,18 +18,31 @@ jobs:
       - name: Validate source branch
         shell: bash
         run: |
+          set -euo pipefail
+
+          version='[0-9]+\.[0-9]+\.[0-9]+'
+          description='[a-z0-9]+(-[a-z0-9]+)*'
+          feature="^feature/${version}-${description}$"
+          bugfix="^bugfix/${version}-${description}$"
+          hotfix="^hotfix/${version}-${description}$"
+          release="^release/${version}$"
+
+          valid=false
           case "$BASE_BRANCH" in
             main)
-              [[ "$HEAD_BRANCH" == release/* || "$HEAD_BRANCH" == hotfix/* ]]
+              [[ "$HEAD_BRANCH" =~ $release || "$HEAD_BRANCH" =~ $hotfix ]] && valid=true
               ;;
             develop)
-              [[ "$HEAD_BRANCH" == feature/* || "$HEAD_BRANCH" == bugfix/* || "$HEAD_BRANCH" == release/* || "$HEAD_BRANCH" == hotfix/* ]]
+              [[ "$HEAD_BRANCH" =~ $feature || "$HEAD_BRANCH" =~ $bugfix || "$HEAD_BRANCH" =~ $release || "$HEAD_BRANCH" =~ $hotfix ]] && valid=true
               ;;
-            *)
-              exit 1
-              ;;
-          esac || {
-            echo "Invalid promotion path: $HEAD_BRANCH -> $BASE_BRANCH"
-            echo "Required Gitflow: feature/* or bugfix/* -> develop; release/* or hotfix/* -> main and develop"
+          esac
+
+          if [[ "$valid" != true ]]; then
+            echo "Invalid Gitflow branch or promotion path: $HEAD_BRANCH -> $BASE_BRANCH"
+            echo "Allowed formats:"
+            echo "  feature/X.Y.Z-description -> develop"
+            echo "  bugfix/X.Y.Z-description -> develop"
+            echo "  release/X.Y.Z -> main and develop"
+            echo "  hotfix/X.Y.Z-description -> main and develop"
             exit 1
-          }
+          fi
