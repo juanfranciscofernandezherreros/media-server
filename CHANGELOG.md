@@ -23,7 +23,8 @@ All notable changes to this project are documented here.
 ### Release workflow
 
 - Created `release/2.4.0` from synchronized `develop`.
-- Promotion and integration pull requests are pending; required checks must pass before merge.
+- Merged promotion PR [#40](https://github.com/juanfranciscofernandezherreros/media-server/pull/40) into `main` after `Enforce Gitflow` and `Validate configuration` passed.
+- Merged integration PR [#41](https://github.com/juanfranciscofernandezherreros/media-server/pull/41) into `develop` after `Enforce Gitflow` and `Validate configuration` passed, without rebase.
 - The final tag will be `v2.4.0`; GitHub Release publication still requires separate explicit authorization.
 
 ## [2.3.0] - 2026-09-15
