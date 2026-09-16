@@ -4,6 +4,28 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+## [2.4.0] - 2026-09-16
+
+### Added
+
+- Added automated Gitflow workflows for starting versioned feature, bugfix, and hotfix branches.
+- Added automatic cleanup of merged feature and bugfix branches.
+- Added separate release preparation and publication workflows with explicit human authorization boundaries.
+
+### Changed
+
+- Hardened the media stack by pinning Gluetun and Tailscale versions and replacing the old Samba image with a maintained image.
+- Required authenticated SMB access for the `media` user while keeping the shared media path read-only.
+- Removed direct Jellyfin host-port exposure in favor of Tailscale access.
+- Added `no-new-privileges` to applicable containers and documented `SAMBA_PASSWORD` in `.env.example`.
+- Tightened Gitflow branch-name validation to require exact versioned branch formats.
+
+### Release workflow
+
+- Created `release/2.4.0` from synchronized `develop`.
+- Promotion and integration pull requests are pending; required checks must pass before merge.
+- The final tag will be `v2.4.0`; GitHub Release publication still requires separate explicit authorization.
+
 ## [2.3.0] - 2026-09-15
 
 ### Changed
@@ -17,6 +39,7 @@ All notable changes to this project are documented here.
 - Merged promotion PR [#34](https://github.com/juanfranciscofernandezherreros/media-server/pull/34) into `main` after `Source branch policy` and `validate` passed.
 - Merged integration PR [#35](https://github.com/juanfranciscofernandezherreros/media-server/pull/35) into `develop` after `Source branch policy` and `validate` passed, without rebase.
 - The final tag is `v2.3.0`; the GitHub Release is authorized to be published from `main` after this changelog record is included there.
+
 ## [2.1.1] - 2026-09-15
 
 ### Fixed
