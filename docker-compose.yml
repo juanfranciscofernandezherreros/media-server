@@ -195,6 +195,8 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
+    ports:
+      - "127.0.0.1:8088:8090"
     restart: unless-stopped
     networks:
       - media-network
